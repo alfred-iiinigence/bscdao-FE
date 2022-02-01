@@ -45,7 +45,7 @@ export enum NetworkId {
 
   Localhost = 1337,
 
-  BSC_TESTNET = 97
+  BSC_TESTNET = 97,
 }
 
 interface IAddresses {
