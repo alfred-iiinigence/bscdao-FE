@@ -40,6 +40,7 @@ const sOhmImg = getTokenImage("sohm");
 const ohmImg = getOhmTokenImage(16, 16);
 
 function V1Stake({ oldAssetsDetected, setMigrationModalOpen, hasActiveV1Bonds }) {
+  console.log("I'm in version 1 stake");
   const dispatch = useDispatch();
   const history = useHistory();
   const { provider, address, connect, networkId } = useWeb3Context();

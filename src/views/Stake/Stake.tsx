@@ -158,6 +158,7 @@ const Stake: React.FC = () => {
 
   const setMax = () => {
     if (view === 0) {
+      console.log("ohmBalance is ", ohmBalance);
       setQuantity(ohmBalance);
     } else if (!confirmation) {
       setQuantity(sohmBalance);
@@ -180,7 +181,6 @@ const Stake: React.FC = () => {
       // eslint-disable-next-line no-alert
       return dispatch(error(t`Please enter a value!`));
     }
-
     // 1st catch if quantity > balance
     const gweiValue = ethers.utils.parseUnits(quantity.toString(), "gwei");
     if (action === "stake" && gweiValue.gt(ethers.utils.parseUnits(ohmBalance, "gwei"))) {

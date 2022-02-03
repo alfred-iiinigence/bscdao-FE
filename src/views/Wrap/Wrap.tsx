@@ -60,7 +60,7 @@ const Wrap: React.FC = () => {
   const avax = NETWORKS[43114];
   const arbitrum = NETWORKS[42161];
 
-  const isAvax = useMemo(() => networkId != 1 && networkId != 4 && networkId != -1, [networkId]);
+  const isAvax = useMemo(() => networkId != 56 && networkId != 97 && networkId != -1, [networkId]);
 
   const wrapButtonText =
     assetTo === "gOHM" ? (assetFrom === "wsOHM" ? "Migrate" : "Wrap") + " to gOHM" : `${currentAction} ${assetFrom}`;
