@@ -5,7 +5,7 @@ import commonSettings, { handleBackdropFilter } from "./global.js";
 
 const lightTheme = {
   color: "#253449",
-  gold: "#F8CC82",
+  gold: "#FFD166",
   gray: "#A3A3A3",
   blueish_gray: "#768299",
   textHighlightColor: "#93AEBC", // "#F4D092",
@@ -27,15 +27,12 @@ const lightTheme = {
   // these need fixing
   primaryButtonHoverColor: "#333333",
   secondaryButtonHoverBG: "rgba(54, 56, 64, 1)",
-  outlinedPrimaryButtonHoverBG: "#F8CC82",
+  outlinedPrimaryButtonHoverBG: "#FFD166",
   outlinedPrimaryButtonHoverColor: "#333333",
   outlinedSecondaryButtonHoverBG: "#FCFCFC",
   outlinedSecondaryButtonHoverColor: "#333333",
   containedSecondaryButtonHoverBG: "#33333333",
   graphStrokeColor: "rgba(37, 52, 73, .2)",
-  gridButtonHoverBackground: "rgba(118, 130, 153, 0.2)",
-  gridButtonActiveBackground: "rgba(118, 130, 153, 0.7)",
-  switchBg: "#FCFCFC",
 };
 
 export const light = responsiveFontSizes(
@@ -65,25 +62,14 @@ export const light = responsiveFontSizes(
         graphStrokeColor: lightTheme.graphStrokeColor,
       },
       typography: {
-        fontFamily: "Square",
+        fontFamily: "Proxima Nova",
+      },
+      props: {
+        MuiSvgIcon: {
+          htmlColor: lightTheme.color,
+        },
       },
       overrides: {
-        MuiSwitch: {
-          colorPrimary: {
-            color: lightTheme.color,
-            "&$checked": {
-              color: lightTheme.switchBg,
-              "& + $track": {
-                backgroundColor: lightTheme.color,
-                borderColor: lightTheme.color,
-              },
-            },
-          },
-          track: {
-            border: `1px solid ${lightTheme.color}`,
-            backgroundColor: lightTheme.switchBg,
-          },
-        },
         MuiCssBaseline: {
           "@global": {
             "@font-face": fonts,
@@ -96,9 +82,6 @@ export const light = responsiveFontSizes(
           root: {
             backgroundColor: lightTheme.paperBg,
             "&.ohm-card": {
-              backgroundColor: lightTheme.paperBg,
-            },
-            "&.MuiPaper-root.tooltip-container": {
               backgroundColor: lightTheme.paperBg,
             },
             "&.ohm-modal": {
@@ -223,11 +206,6 @@ export const light = responsiveFontSizes(
             },
           },
         },
-        MuiSelect: {
-          select: {
-            color: "#93AEBC",
-          },
-        },
         MuiButton: {
           containedPrimary: {
             color: "#FCFCFC",
@@ -294,39 +272,13 @@ export const light = responsiveFontSizes(
             },
             "&:active": {
               color: lightTheme.gold,
-              borderBottom: "#F8CC82",
+              borderBottom: "#FFD166",
             },
           },
           textSecondary: {
             color: lightTheme.color,
             "&:hover": {
               color: lightTheme.textHighlightColor,
-            },
-          },
-        },
-        MuiTypography: {
-          root: {
-            "&.grid-message-typography": {
-              color: lightTheme.blueish_gray,
-            },
-            "&.chain-highlight": {
-              color: lightTheme.color,
-            },
-          },
-        },
-        MuiGrid: {
-          root: {
-            "&.grid-button": {
-              borderColor: `${lightTheme.gridButtonActiveBackground} !important`,
-              "&:hover": {
-                backgroundColor: lightTheme.gridButtonHoverBackground,
-              },
-              "&.current": {
-                backgroundColor: lightTheme.gridButtonActiveBackground,
-                "&:hover": {
-                  backgroundColor: lightTheme.gridButtonHoverBackground,
-                },
-              },
             },
           },
         },
