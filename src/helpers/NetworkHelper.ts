@@ -39,6 +39,14 @@ export const initNetworkFunc = async ({ provider }: IGetCurrentNetwork) => {
         networkName = "Avalanche";
         uri = NodeHelper.getMainnetURI(id);
         break;
+      case 97:
+        networkName = "BSC Testnet";
+        uri = "https://data-seed-prebsc-1-s1.binance.org:8545/";
+        break;
+      case 56:
+        networkName = "BSC";
+        uri = "https://dataseed1.binance.org/";
+        break;
       default:
         supported = false;
         networkName = "Unsupported Network";
