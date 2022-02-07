@@ -33,20 +33,23 @@ const commonSettings = {
   direction: "ltr",
   typography: {
     fontSize: 16,
-    fontFamily: "Square",
+    fontFamily: "Proxima Nova",
     h1: {
       fontSize: "3.3rem",
+      fontWeight: 600,
     },
     h2: {
       fontSize: "2.3rem",
-      fontWeight: 600,
       letterSpacing: "1.3px",
+      fontWeight: 600,
     },
     h3: {
       fontSize: "1.75rem",
+      fontWeight: 600,
     },
     h4: {
       fontSize: "1.5rem",
+      fontWeight: 600,
     },
     h5: {
       fontSize: "1.25rem",
@@ -56,47 +59,22 @@ const commonSettings = {
       fontSize: "1rem",
     },
     body1: {
-      fontSize: "0.875rem",
+      fontSize: "1rem",
       fontWeight: 500,
-      lineHeight: 1,
+      lineHeight: "1.4rem",
     },
     body2: {
-      fontSize: "0.75rem",
+      fontSize: "0.875rem",
       fontWeight: 400,
       lineHeight: 1,
+      lineHeight: "1.4rem",
     },
     button: {
       textTransform: "none",
-      fontSize: "1.25rem",
+      fontSize: "1rem",
     },
   },
   overrides: {
-    MuiSwitch: {
-      root: {
-        width: 28,
-        height: 16,
-        padding: 0,
-        display: "flex",
-      },
-      switchBase: {
-        padding: 2,
-        "&$checked": {
-          transform: "translateX(12px)",
-          "& + $track": {
-            opacity: 1,
-          },
-        },
-      },
-      track: {
-        borderRadius: 16 / 2,
-        opacity: 1,
-      },
-      thumb: {
-        width: 12,
-        height: 12,
-        boxShadow: "none",
-      },
-    },
     MuiCssBaseline: {
       "@global": {
         "@font-face": fonts,
@@ -114,10 +92,9 @@ const commonSettings = {
     },
     MuiPaper: {
       root: {
-        backdropFilter: "blur(33px)",
+        // backdropFilter: "blur(33px)",
         "&.ohm-card": {
           padding: "20px 30px 30px 30px",
-          borderRadius: "10px",
           maxWidth: "833px",
           width: "97%",
           marginBottom: "1.8rem",
@@ -125,7 +102,6 @@ const commonSettings = {
         },
         "&.ohm-menu": {
           padding: "22px 0px",
-          borderRadius: "10px",
           margin: "0px",
         },
         "&.ohm-chart-card": {
@@ -164,6 +140,7 @@ const commonSettings = {
         fontSize: "1rem",
       },
       head: {
+        fontSize: "0.8rem",
         color: "#999999",
       },
     },
@@ -182,7 +159,7 @@ const commonSettings = {
     },
     MuiBackdrop: {
       root: {
-        // backdropFilter: "blur(15px)",
+        backdropFilter: "blur(15px)",
         zIndex: 0,
       },
     },
@@ -196,29 +173,25 @@ const commonSettings = {
     },
     MuiButton: {
       root: {
-        borderRadius: "5px",
+        borderRadius: "8px",
         textTransform: "none",
         textDecoration: "none",
         whiteSpace: "nowrap",
         minWidth: "max-content",
-        maxHeight: "40px",
+        maxHeight: "42px",
+        fontWeight: "600",
+        fontSize: "18px",
       },
       containedPrimary: {
         border: 0,
-        fontWeight: "500",
       },
-      containedSecondary: {
-        fontWeight: "400",
-      },
+      containedSecondary: {},
       outlinedPrimary: {
-        height: "33px",
         padding: "9px 20px",
       },
       outlinedSecondary: {
         textTransform: "none",
         textDecoration: "none",
-        height: "33px",
-        fontSize: "1.1em",
         padding: "9px 20px",
       },
       text: {
@@ -265,7 +238,7 @@ const commonSettings = {
         padding: "0px",
         margin: "0px 10px",
         fontWeight: 400,
-        fontSize: "24px",
+        fontSize: "1rem",
         fontStyle: "normal",
         lineHeight: "24px",
       },

@@ -45,6 +45,7 @@ export enum NetworkId {
 
   Localhost = 1337,
 
+  BSC = 56,
   BSC_TESTNET = 97,
 }
 
@@ -54,6 +55,15 @@ interface IAddresses {
 
 export const addresses: IAddresses = {
   [NetworkId.BSC_TESTNET]: {
+    BSCDAO_ADDRESS: "0xA87C4882fF50B9ADB04c64EBEC828C2e7A903e37",
+    STAKING_ADDRESS: "0x3D9674D20EB5cC92E42e9d633C4e1560FB8D3004",
+    BOND_DEPOSITORY: "0x2B61CDaaa3eCC6FE90Adc9744A5774abeC948876",
+    TREASURY: "0xBe0A08e1C2437127E3dD4e90849C44eE404Db238",
+    SBSCDAO: "0x05112204DD9E136113a6aB4aD5f380bFC659c995",
+    DISTRIBUTOR: "0x30DcAbAaAb1a0c89088c8D8783A9c5c54ea04Dec",
+    STAKING_HELPER_ADDRESS: "0x8f8c8d8f8c8d8f8c8d8f8c8d8f8c8d8f8c8d8f8",
+  },
+  [NetworkId.BSC]: {
     BSCDAO_ADDRESS: "0xA87C4882fF50B9ADB04c64EBEC828C2e7A903e37",
     STAKING_ADDRESS: "0x3D9674D20EB5cC92E42e9d633C4e1560FB8D3004",
     BOND_DEPOSITORY: "0x2B61CDaaa3eCC6FE90Adc9744A5774abeC948876",
@@ -246,6 +256,34 @@ export const USER_SELECTABLE_NETWORKS = [NetworkId.MAINNET, NetworkId.ARBITRUM, 
 export const NEWEST_NETWORK_ID = NetworkId.AVALANCHE;
 
 export const NETWORKS: { [key: number]: INetwork } = {
+  [NetworkId.BSC]: {
+    chainName: "Binance Smart Chain",
+    chainId: 56,
+    nativeCurrency: {
+      name: "Binance Coin",
+      symbol: "BNB",
+      decimals: 18,
+    },
+    rpcUrls: [""],
+    blockExplorerUrls: ["https://bscscan.com/"],
+    image: ethereum,
+    imageAltText: "BNB Logo",
+    uri: () => NodeHelper.getMainnetURI(NetworkId.MAINNET),
+  },
+  [NetworkId.BSC_TESTNET]: {
+    chainName: "BSC Testnet",
+    chainId: 97,
+    nativeCurrency: {
+      name: "Binance Coin",
+      symbol: "BNB",
+      decimals: 18,
+    },
+    rpcUrls: [""],
+    blockExplorerUrls: ["https://testnet.bscscan.com/"],
+    image: ethereum,
+    imageAltText: "BNB Logo",
+    uri: () => NodeHelper.getMainnetURI(NetworkId.MAINNET),
+  },
   [NetworkId.MAINNET]: {
     chainName: "Ethereum",
     chainId: 1,
@@ -375,6 +413,26 @@ interface IViewsForNetwork {
 }
 
 export const VIEWS_FOR_NETWORK: { [key: number]: IViewsForNetwork } = {
+  [NetworkId.BSC]: {
+    dashboard: true,
+    stake: true,
+    wrap: true,
+    zap: true,
+    threeTogether: true,
+    bonds: true,
+    network: true,
+    bondsV2: true,
+  },
+  [NetworkId.BSC_TESTNET]: {
+    dashboard: true,
+    stake: true,
+    wrap: true,
+    zap: true,
+    threeTogether: true,
+    bonds: true,
+    network: true,
+    bondsV2: true,
+  },
   [NetworkId.MAINNET]: {
     dashboard: true,
     stake: true,

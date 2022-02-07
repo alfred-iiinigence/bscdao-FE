@@ -282,7 +282,7 @@ function WrapCrossChain() {
                     <Divider />
                     <Box width="100%" alignItems={"center"} display="flex" flexDirection="column" p={1}>
                       <Typography variant="h6" style={{ margin: "15px 0 10px 0" }}>
-                        Back to Ethereum Mainnet
+                        Back to Binance Smart Chain
                       </Typography>
                       <Button onClick={handleSwitchChain(1)} variant="outlined">
                         <img height="28px" width="28px" src={String(ethereum.image)} alt={ethereum.imageAltText} />
