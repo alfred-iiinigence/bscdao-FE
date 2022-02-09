@@ -1,3 +1,5 @@
+@import url(./assets/fonts/style.css);
+
 * {
   outline: none;
   -ms-overflow-style: none !important; /* IE and Edge */
@@ -10,7 +12,7 @@
 html,
 body,
 #root {
-  font-family: "Square";
+  font-family: "Gilroy", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
@@ -29,24 +31,69 @@ body {
   flex-direction: column;
   z-index: 1;
   background-size: cover;
-  font-family: "Square";
+  font-family: "Gilroy", sans-serif;
   overflow: hidden;
   transition: all ease 0.33ms;
+}
+
+.app-content {
+  //darkTheme.borderColor
+  // background-image: url(./assets/images/main-bg.png);
+  background-color: #F7F9FB;
+  background-size: cover;
+  overflow: visible !important;
+  &__container {
+    margin-top: 100px !important;
+    height: calc(100% - 100px);
+    overflow: auto;
+  }
+}
+
+.mobile {
+  header {
+    height: 56px;
+  }
+  .app-content {
+    &__container {
+      margin-top: 60px !important;
+      height: calc(100% - 100px);
+      overflow: auto;
+    }
+  }
 }
 
 .MuiDrawer-paperAnchorDockedLeft {
   border-right: 0 !important;
 }
+.page-header {
+  text-align: left !important;
+  display: block;
+  width: 97% !important;
+  max-width: 833px;
+  margin-bottom: 1rem;
+  h3 {
+    font-weight: 800;
+  }
+  p {
+    // color: #fff;
+  }
+}
+.logo {
+  h3 {
+    font-family: 'Gilroy' !important;
+    font-weight: 400 !important;
+  }
+}
 
 .ohm-card {
   max-width: 833px;
+  @supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
+    backdrop-filter: blur(6px);
+  }
   .card-header {
     width: 100%;
     min-height: 33px;
     margin-bottom: 10px;
-    h5 {
-      font-weight: 600 !important;
-    }
   }
 
   .help-text {
@@ -87,8 +134,4 @@ input[type="number"] {
 
 a:hover svg {
   color: inherit;
-}
-
-.tooltip {
-  z-index: 9999999;
 }

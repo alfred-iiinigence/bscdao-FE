@@ -1,56 +1,54 @@
-import { JsonRpcSigner, StaticJsonRpcProvider } from "@ethersproject/providers";
-import { SvgIcon } from "@material-ui/core";
-import axios from "axios";
+import { EPOCH_INTERVAL, BLOCK_RATE_SECONDS, addresses } from "../constants";
 import { BigNumber, ethers } from "ethers";
-import { IBondV2 } from "src/slices/BondSliceV2";
-import { IBaseAsyncThunk } from "src/slices/interfaces";
-import { GOHM__factory } from "src/typechain/factories/GOHM__factory";
-
+import axios from "axios";
 import { abi as PairContractABI } from "../abi/PairContract.json";
 import { abi as RedeemHelperABI } from "../abi/RedeemHelper.json";
-import { ReactComponent as OhmImg } from "../assets/tokens/token_OHM.svg";
-import { ReactComponent as SOhmImg } from "../assets/tokens/token_sOHM.svg";
-import { addresses, BLOCK_RATE_SECONDS, EPOCH_INTERVAL, NetworkId } from "../constants";
+
+import { mush_busd } from "./AllBonds";
+import { JsonRpcSigner, StaticJsonRpcProvider } from "@ethersproject/providers";
+import { IBaseAsyncThunk } from "src/slices/interfaces";
 import { PairContract, RedeemHelper } from "../typechain";
-import { ohm_dai, ohm_daiOld, ohm_weth } from "./AllBonds";
-import { EnvHelper } from "./Environment";
-import { NodeHelper } from "./NodeHelper";
 
 /**
- * gets marketPrice from Ohm-DAI v2
- * @returns Number like 333.33
+ * !This following function is for getting the price of a TOKEN POOL,
+ * The contract needs to be a LP contract with getReserves method to get the price.
+ * ISSUE : Currently we don't have a LP contract and thus causing the crash.
+ * TEMP SOLUTION : Replacing the price call with API to fetch token price.
  */
-export async function getMarketPrice() {
-  const mainnetProvider = NodeHelper.getMainnetStaticProvider();
-  // v2 price
-  const ohm_dai_address = ohm_dai.getAddressForReserve(NetworkId.MAINNET);
-  const pairContract = new ethers.Contract(ohm_dai_address || "", PairContractABI, mainnetProvider) as PairContract;
+export async function getMarketPrice({ networkID, provider }: IBaseAsyncThunk) {
+  /**
+   * Uncomment the following lines and make sure that the token contract is of LPCoin
+
+  const mush_busd_address = mush_busd.getAddressForReserve(networkID);
+  console.log(`🚀 - getMarketPrice - mush_busd_address`, mush_busd_address);
+  const pairContract = new ethers.Contract(mush_busd_address, PairContractABI, provider) as PairContract;
+  console.log(`🚀 - getMarketPrice - pairContract`, pairContract);
+  await pairContract
+    .getReserves()
+    .then(res => {
+      console.log(`🚀 - getMarketPrice - res`, res);
+    })
+    .catch(err => {
+      console.log(`🚀 - getMarketPrice - err`, err);
+    });
   const reserves = await pairContract.getReserves();
+  console.log(`🚀 - getMarketPrice - reserves`, reserves);
 
-  return Number(reserves[1].toString()) / Number(reserves[0].toString()) / 10 ** 9;
-}
+  const marketPrice = Number(reserves[1].toString()) / Number(reserves[0].toString());*/
+  let resp;
+  //mush
+  let tokenId = "mushroom";
+  // let tokenId = "01coin";
+  try {
+    resp = await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`);
+    console.log(`🚀 - getMarketPrice - resp`, resp);
+    //Currently the $ is converted into wei
+    return resp.data[tokenId].usd * Math.pow(10, 9);
+  } catch (e) {
+    console.log("coingecko api error: ", e);
+  }
 
-export async function getMarketPriceFromWeth() {
-  const mainnetProvider = NodeHelper.getMainnetStaticProvider();
-  // v2 price
-  const ohm_weth_address = ohm_weth.getAddressForReserve(NetworkId.MAINNET);
-  const wethBondContract = ohm_weth.getContractForBond(NetworkId.MAINNET, mainnetProvider);
-  const pairContract = new ethers.Contract(ohm_weth_address || "", PairContractABI, mainnetProvider) as PairContract;
-  const reserves = await pairContract.getReserves();
-
-  // since we're using OHM/WETH... also need to multiply by weth price;
-  const wethPriceBN: BigNumber = await wethBondContract.assetPrice();
-  const wethPrice = Number(wethPriceBN.toString()) / Math.pow(10, 8);
-  return (Number(reserves[1].toString()) / Number(reserves[0].toString()) / 10 ** 9) * wethPrice;
-}
-
-export async function getV1MarketPrice() {
-  const mainnetProvider = NodeHelper.getMainnetStaticProvider();
-  // v1 price
-  const ohm_dai_address = ohm_daiOld.getAddressForReserve(NetworkId.MAINNET);
-  const pairContract = new ethers.Contract(ohm_dai_address || "", PairContractABI, mainnetProvider) as PairContract;
-  const reserves = await pairContract.getReserves();
-  return Number(reserves[1].toString()) / Number(reserves[0].toString()) / 10 ** 9;
+  return 0;
 }
 
 /**
@@ -58,76 +56,25 @@ export async function getV1MarketPrice() {
  * @param tokenId STRING taken from https://www.coingecko.com/api/documentations/v3#/coins/get_coins_list
  * @returns INTEGER usd value
  */
-export async function getTokenPrice(tokenId = "olympus"): Promise<number> {
+export async function getTokenPrice(tokenId = "mush") {
+  let resp;
   try {
-    const resp = (await axios.get(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`,
-    )) as {
-      data: { [id: string]: { usd: number } };
-    };
-    const tokenPrice: number = resp.data[tokenId].usd;
-    return tokenPrice;
+    resp = await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`);
+    return resp.data[tokenId].usd;
   } catch (e) {
     // console.log("coingecko api error: ", e);
-    return 0;
   }
 }
-
-/**
- * gets price of token from coingecko
- * @param contractAddress STRING representing address
- * @returns INTEGER usd value
- */
-export async function getTokenByContract(contractAddress: string): Promise<number> {
-  const downcasedAddress = contractAddress.toLowerCase();
-  const chainName = "ethereum";
-  try {
-    const resp = (await axios.get(
-      `https://api.coingecko.com/api/v3/simple/token_price/${chainName}?contract_addresses=${downcasedAddress}&vs_currencies=usd`,
-    )) as {
-      data: { [address: string]: { usd: number } };
-    };
-    const tokenPrice: number = resp.data[downcasedAddress].usd;
-    return tokenPrice;
-  } catch (e) {
-    // console.log("coingecko api error: ", e);
-    return 0;
-  }
-}
-
-export async function getTokenIdByContract(contractAddress: string): Promise<string> {
-  try {
-    const resp = (await axios.get(`https://api.coingecko.com/api/v3/coins/ethereum/contract/${contractAddress}'`)) as {
-      data: { id: string };
-    };
-    return resp.data.id;
-  } catch (e) {
-    // console.log("coingecko api error: ", e);
-    return "";
-  }
-}
-
-export const getEtherscanUrl = ({ bond, networkId }: { bond: IBondV2; networkId: NetworkId }) => {
-  if (networkId === NetworkId.TESTNET_RINKEBY) {
-    return `https://rinkeby.etherscan.io/address/${bond.quoteToken}`;
-  }
-  return `https://etherscan.io/address/${bond.quoteToken}`;
-};
 
 export function shorten(str: string) {
   if (str.length < 10) return str;
   return `${str.slice(0, 6)}...${str.slice(str.length - 4)}`;
 }
 
-export function shortenString(str: string, length: number) {
-  return str.length > length ? str.substring(0, length) + "..." : str;
-}
-
-export function formatCurrency(c: number, precision = 0, currency = "USD") {
-  if (currency === "OHM") return `${trim(c, precision)} Ω`;
+export function formatCurrency(c: number, precision = 0) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency,
+    currency: "USD",
     maximumFractionDigits: precision,
     minimumFractionDigits: precision,
   }).format(c);
@@ -135,7 +82,7 @@ export function formatCurrency(c: number, precision = 0, currency = "USD") {
 
 export function trim(number = 0, precision = 0) {
   // why would number ever be undefined??? what are we trimming?
-  const array = Number(number).toFixed(8).split(".");
+  const array = number.toString().split(".");
   if (array.length === 1) return number.toString();
   if (precision === 0) return array[0].toString();
 
@@ -149,11 +96,37 @@ export function getRebaseBlock(currentBlock: number) {
   return currentBlock + EPOCH_INTERVAL - (currentBlock % EPOCH_INTERVAL);
 }
 
-export function secondsUntilBlock(startBlock: number, endBlock: number): number {
-  const blocksAway = endBlock - startBlock;
+export function secondsUntilBlock(currentBlock: number, endBlock: number) {
+  console.log(
+    `🚀 - secondsUntilBlock - currentBlock 2`,
+    currentBlock,
+    endBlock,
+    EPOCH_INTERVAL,
+    parseInt(endBlock.toString()) - parseInt(currentBlock.toString()),
+    " Mod = ",
+    parseInt(currentBlock.toString()) % parseInt(EPOCH_INTERVAL.toString()),
+    " After Mod = ",
+    Math.abs(
+      (parseInt(currentBlock.toString()) % parseInt(EPOCH_INTERVAL.toString())) - parseInt(EPOCH_INTERVAL.toString()),
+    ),
+  );
+  // const blocksAway = endBlock - currentBlock;
+  // console.log(`🚀 - secondsUntilBlock - endBlock - currentBlock`, endBlock, currentBlock);
+  console.log(`🚀 - vestingPeriod - parseInt(EPOCH_INTERVAL.toString())`, parseInt(EPOCH_INTERVAL.toString()));
+  // const blocksAway =
+  //   parseInt(endBlock.toString()) + parseInt(EPOCH_INTERVAL.toString()) - parseInt(currentBlock.toString());
+  const blocksAway = Math.abs(
+    (parseInt(currentBlock.toString()) % parseInt(EPOCH_INTERVAL.toString())) - parseInt(EPOCH_INTERVAL.toString()),
+  );
+  console.log(`🚀 - vestingPeriod - blocksAway`, blocksAway);
   const secondsAway = blocksAway * BLOCK_RATE_SECONDS;
+  return Math.abs(secondsAway);
+}
 
-  return secondsAway;
+export function getTimeFromBlockForBonds(currentBlock: number, endBlock: number) {
+  const blocksAway = endBlock - currentBlock;
+  const secondsAway = blocksAway * BLOCK_RATE_SECONDS;
+  return Math.abs(secondsAway);
 }
 
 export function prettyVestingPeriod(currentBlock: number, vestingBlock: number) {
@@ -161,7 +134,7 @@ export function prettyVestingPeriod(currentBlock: number, vestingBlock: number) 
     return "";
   }
 
-  const seconds = secondsUntilBlock(currentBlock, vestingBlock);
+  const seconds = getTimeFromBlockForBonds(currentBlock, vestingBlock);
   if (seconds < 0) {
     return "Fully Vested";
   }
@@ -193,37 +166,20 @@ export function prettifySeconds(seconds: number, resolution?: string) {
   return result;
 }
 
-function getSohmTokenImage() {
-  return <SvgIcon component={SOhmImg} viewBox="0 0 100 100" style={{ height: "1rem", width: "1rem" }} />;
-}
-
-export function getOhmTokenImage(w?: number, h?: number) {
-  const height = h == null ? "32px" : `${h}px`;
-  const width = w == null ? "32px" : `${w}px`;
-  return <SvgIcon component={OhmImg} viewBox="0 0 32 32" style={{ height, width }} />;
-}
-
-export function getTokenImage(name: string) {
-  if (name === "ohm") return getOhmTokenImage();
-  if (name === "sohm") return getSohmTokenImage();
-}
-
 // TS-REFACTOR-NOTE - Used for:
-// AccountSlice.ts, AppSlice.ts
+// AccountSlice.ts, AppSlice.ts, LusdSlice.ts
 export function setAll(state: any, properties: any) {
-  if (properties) {
-    const props = Object.keys(properties);
-    props.forEach(key => {
-      state[key] = properties[key];
-    });
-  }
+  const props = Object.keys(properties);
+  props.forEach(key => {
+    state[key] = properties[key];
+  });
 }
 
 export function contractForRedeemHelper({
   networkID,
   provider,
 }: {
-  networkID: NetworkId;
+  networkID: number;
   provider: StaticJsonRpcProvider | JsonRpcSigner;
 }) {
   return new ethers.Contract(
@@ -267,30 +223,30 @@ export const minutesAgo = (x: number) => {
  * ... Math.trunc which accomplishes the same result as parseInt.
  */
 export const subtractDates = (dateA: Date, dateB: Date) => {
-  const msA: number = dateA.getTime();
-  const msB: number = dateB.getTime();
+  let msA: number = dateA.getTime();
+  let msB: number = dateB.getTime();
 
   let diff: number = msA - msB;
 
-  let days = 0;
+  let days: number = 0;
   if (diff >= 86400000) {
     days = Math.trunc(diff / 86400000);
     diff -= days * 86400000;
   }
 
-  let hours = 0;
+  let hours: number = 0;
   if (days || diff >= 3600000) {
     hours = Math.trunc(diff / 3600000);
     diff -= hours * 3600000;
   }
 
-  let minutes = 0;
+  let minutes: number = 0;
   if (hours || diff >= 60000) {
     minutes = Math.trunc(diff / 60000);
     diff -= minutes * 60000;
   }
 
-  let seconds = 0;
+  let seconds: number = 0;
   if (minutes || diff >= 1000) {
     seconds = Math.trunc(diff / 1000);
   }
@@ -310,16 +266,8 @@ export const bnToNum = (bigNum: BigNumber) => {
   return Number(bigNum.toString());
 };
 
-export const handleContractError = (e: any) => {
-  if (EnvHelper.env.NODE_ENV !== "production") console.warn("caught error in slices; usually network related", e);
-};
-
-interface ICheckBalance extends IBaseAsyncThunk {
-  readonly sOHMbalance: string;
-}
-
-export const getGohmBalFromSohm = async ({ provider, networkID, sOHMbalance }: ICheckBalance) => {
-  const gOhmContract = GOHM__factory.connect(addresses[networkID].GOHM_ADDRESS, provider);
-  const formattedGohmBal = await gOhmContract.balanceTo(ethers.utils.parseUnits(sOHMbalance, "gwei").toString());
-  return ethers.utils.formatEther(formattedGohmBal);
+export const validateETHAddress = (str: string) => {
+  if (!str) return false;
+  const referralValidate = new RegExp(/0x[a-fA-F0-9]{40}/g);
+  return referralValidate.test(str);
 };

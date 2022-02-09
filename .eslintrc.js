@@ -1,7 +1,5 @@
 module.exports = {
   env: {
-    node: true,
-    jest: true,
     browser: true,
   },
   parser: "@typescript-eslint/parser",
@@ -12,20 +10,10 @@ module.exports = {
       jsx: true,
     },
   },
-  extends: [
-    "plugin:prettier/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
-  ],
-  plugins: ["@typescript-eslint", "simple-import-sort", "unused-imports"],
+  extends: ["plugin:prettier/recommended", "prettier/react", "prettier/@typescript-eslint"],
+  plugins: ["prettier"],
   rules: {
-    "prettier/prettier": [
-      "error",
-      {
-        endOfLine: "auto",
-      },
-    ],
+    "prettier/prettier": ["off", {"endOfLine": "auto"}],
     "import/prefer-default-export": "off",
     "prefer-destructuring": "off",
     "prefer-template": "off",
@@ -39,24 +27,5 @@ module.exports = {
     "no-nested-ternary": "off",
     "no-restricted-syntax": "off",
     "no-plusplus": "off",
-    "simple-import-sort/imports": "error",
-    "unused-imports/no-unused-imports": "error",
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/explicit-module-boundary-types": "off",
-    "@typescript-eslint/ban-ts-comment": "off",
-    "@typescript-eslint/ban-ts-ignore": "off",
   },
-  ignorePatterns: ["build", "node_modules"],
-  globals: {
-    React: true,
-    JSX: true,
-  },
-  overrides: [
-    {
-      files: ["**/*.js", "**/*.jsx"],
-      rules: {
-        "no-undef": "error",
-      },
-    },
-  ],
 };

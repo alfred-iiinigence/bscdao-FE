@@ -28,6 +28,7 @@ tests/e2e/videos
 
 # production
 build
+./build.zip
 
 # misc
 .DS_Store
@@ -41,14 +42,6 @@ yarn-error.log*
 # Integrated development environnements
 .idea
 *.sublime-*
-
-# Hardhat
-cache
-
 .vscode
 
 src/typechain
-!src/typechain/pooltogether.d.ts
-
-# We use Yarn - prevent this file from being committed to avoid confusion
-package-lock.json

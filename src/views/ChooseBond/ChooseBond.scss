@@ -4,16 +4,29 @@
   justify-content: center;
   flex-direction: column;
   overflow: hidden;
+  padding-bottom: 2rem;
 
-  .ohm-card-container {
-    width: 100%;
+  .bond-img {
+    position: fixed;
+    z-index: 0;
+    bottom: 0;
+    right: 0;
+    width: 350px;
   }
-  
-  .ohm-card .bond-hero h4 {
-    font-weight: 600 !important;
 
-    .MuiSkeleton-root {
-      margin: auto;
+  .ohm-card {
+    position: relative;
+    z-index: 2;
+    .bond-hero {
+      h3 {
+        padding: 6px 12px;
+        width: 100%;
+        font-weight: 700;
+      }
+
+      span {
+        margin: auto;
+      }
     }
   }
 
@@ -99,6 +112,7 @@
   }
 
   .MuiTableCell-root {
+    font-weight: 600;
     p {
       margin: 0 !important;
       display: flex !important;
@@ -125,12 +139,60 @@
       p {
         margin-bottom: unset !important;
         line-height: 140% !important;
+        color: var(--color-gold);
+      }
+      a {
+        p {
+          font-size: 0.8rem;
+          opacity: 0.8;
+        }
       }
       svg {
         margin-left: 3px !important;
         font-size: 1.2em !important;
       }
     }
+  }
+
+  .referral-card {
+    background-color: rgba($color: #000, $alpha: 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+
+    img {
+      margin-right: 1rem;
+      height: 8rem;
+    }
+
+    h5 {
+      font-weight: 800;
+    }
+
+    &__address {
+      display: flex;
+      align-items: center;
+      a {
+        padding-right: 1rem;
+        text-align: right;
+        padding-top: 0.1rem;
+      }
+    }
+    .white--text {
+      color: #fff;
+      margin-bottom: 0;
+      width: 100%;
+    }
+  }
+
+  .referral-card__pc {
+    display: block;
+  }
+  .referral-card__mobile {
+    display: none;
   }
 }
 
@@ -142,11 +204,42 @@
   }
 }
 
-.mobile #choose-bond-view {
-  .claim-bond-card-buttons {
-    flex-direction: column;
-    button {
+.mobile {
+  #choose-bond-view {
+    .claim-bond-card-buttons {
+      flex-direction: column;
+      button {
+        width: 100%;
+      }
+    }
+
+    .referral-card {
+      margin-top: 2rem;
+    }
+
+    .ohm-card-container {
       width: 100%;
+    }
+    .referral-card__pc {
+      display: none;
+    }
+    .referral-card__mobile {
+      display: block;
+      margin-top: 0;
+      padding: 1rem;
+      p {
+        margin: 0;
+      }
+      img {
+        height: 5rem;
+      }
+      .referral-card__address {
+        width: 100%;
+        a {
+          width: 100%;
+          padding: 0;
+        }
+      }
     }
   }
 }

@@ -1,18 +1,48 @@
-import { JsonRpcProvider, Web3Provider } from "@ethersproject/providers";
-import { IFrameEthereumProvider } from "@ledgerhq/iframe-provider";
-import WalletConnectProvider from "@walletconnect/web3-provider";
-import React, { ReactElement, useCallback, useContext, useMemo, useState } from "react";
-import { idFromHexString, initNetworkFunc } from "src/helpers/NetworkHelper";
-import { NodeHelper } from "src/helpers/NodeHelper";
+import React, { useState, ReactElement, useContext, useEffect, useMemo, useCallback } from "react";
 import Web3Modal from "web3modal";
+import { StaticJsonRpcProvider, JsonRpcProvider, Web3Provider } from "@ethersproject/providers";
+import WalletConnectProvider from "@walletconnect/web3-provider";
+import { IFrameEthereumProvider } from "@ledgerhq/iframe-provider";
+import { EnvHelper } from "../helpers/Environment";
+import { NodeHelper } from "src/helpers/NodeHelper";
 
-import { NETWORKS } from "../constants";
+export enum NetworkID {
+  // Mainnet = 56,
+  // Testnet = 97,
+
+  Mainnet = 250,
+  Testnet = 4002,
+}
+
+/**
+ * kept as function to mimic `getMainnetURI()`
+ * @returns string
+ */
+function getTestnetURI() {
+  return EnvHelper.alchemyTestnetURI;
+}
 
 /**
  * determine if in IFrame for Ledger Live
  */
 function isIframe() {
-  return window.location !== window.parent.location;
+  return false; //window.location !== window.parent.location;
+}
+
+const ALL_URIs = NodeHelper.getNodesUris();
+
+/**
+ * "intelligently" loadbalances production API Keys
+ * @returns string
+ */
+function getMainnetURI(): string {
+  // Shuffles the URIs for "intelligent" loadbalancing
+  const allURIs = ALL_URIs.sort(() => Math.random() - 0.5);
+
+  // There is no lightweight way to test each URL. so just return a random one.
+  // if (workingURI !== undefined || workingURI !== "") return workingURI as string;
+  const randomIndex = Math.floor(Math.random() * allURIs.length);
+  return allURIs[randomIndex];
 }
 
 /*
@@ -23,13 +53,11 @@ type onChainProvider = {
   disconnect: () => void;
   hasCachedProvider: () => boolean;
   address: string;
+  chainID: number;
   connected: boolean;
   provider: JsonRpcProvider;
+  uri: string;
   web3Modal: Web3Modal;
-  networkId: number;
-  networkName: string;
-  providerUri: string;
-  providerInitialized: boolean;
 };
 
 export type Web3ContextData = {
@@ -56,37 +84,42 @@ export const useAddress = () => {
   return address;
 };
 
-const initModal = new Web3Modal({
-  // network: "mainnet", // optional
-  cacheProvider: true, // optional
-  providerOptions: {
-    walletconnect: {
-      package: WalletConnectProvider,
-      options: {
-        rpc: {
-          1: NETWORKS[1].uri(),
-          4: NETWORKS[4].uri(),
-          42161: NETWORKS[42161].uri(),
-          421611: NETWORKS[421611].uri(),
-          43113: NETWORKS[43113].uri(),
-          43114: NETWORKS[43114].uri(),
-        },
-      },
-    },
-  },
-});
-
 export const Web3ContextProvider: React.FC<{ children: ReactElement }> = ({ children }) => {
   const [connected, setConnected] = useState(false);
+  // NOTE (appleseed): if you are testing on rinkeby you need to set chainId === 4 as the default for non-connected wallet testing...
+  // ... you also need to set getTestnetURI() as the default uri state below
+  const [chainID, setChainID] = useState(NetworkID["Mainnet"]);
+  console.log(`🚀 - chainID 1`, chainID);
   const [address, setAddress] = useState("");
-  // NOTE (appleseed): loading eth mainnet as default rpc provider for a non-connected wallet
-  const [provider, setProvider] = useState<JsonRpcProvider>(NodeHelper.getMainnetStaticProvider());
-  const [networkId, setNetworkId] = useState(1);
-  const [networkName, setNetworkName] = useState("");
-  const [providerUri, setProviderUri] = useState("");
-  const [providerInitialized, setProviderInitialized] = useState(false);
 
-  const [web3Modal, setWeb3Modal] = useState<Web3Modal>(initModal);
+  const [uri, setUri] = chainID === NetworkID["Testnet"] ? useState(getTestnetURI()) : useState(getMainnetURI());
+  console.log(`🚀 - getMainnetURI()111`, getTestnetURI());
+  console.log(`🚀 - getMainnetURI()`, getMainnetURI());
+  console.log(`🚀 - getMainnetURI 2`, uri);
+
+  const [provider, setProvider] = useState<JsonRpcProvider>(new StaticJsonRpcProvider(uri));
+  console.log(`🚀 - provider`, provider);
+  console.log(`🚀 - provider`, { ...provider, _network: { ...provider._network, chainId: 250 } });
+
+  const [web3Modal, setWeb3Modal] = useState<Web3Modal>(
+    new Web3Modal({
+      // network: "mainnet", // optional
+      cacheProvider: true, // optional
+      providerOptions: {
+        walletconnect: {
+          package: WalletConnectProvider,
+          options: {
+            rpc: {
+              // 56: getMainnetURI(),
+              // 97: getTestnetURI(),
+              250: getMainnetURI(),
+              4002: getTestnetURI(),
+            },
+          },
+        },
+      },
+    }),
+  );
 
   const hasCachedProvider = (): boolean => {
     if (!web3Modal) return false;
@@ -106,24 +139,45 @@ export const Web3ContextProvider: React.FC<{ children: ReactElement }> = ({ chil
         setTimeout(() => window.location.reload(), 1);
       });
 
-      rawProvider.on("chainChanged", async (_chainId: string) => {
-        const newChainId = idFromHexString(_chainId);
-        const networkHash = await initNetworkFunc({ provider });
-        if (newChainId !== networkHash.networkId) {
-          // then provider is out of sync, reload per metamask recommendation
-          setTimeout(() => window.location.reload(), 1);
-        } else {
-          setNetworkId(networkHash.networkId);
-        }
+      rawProvider.on("chainChanged", async (chain: number) => {
+        _checkNetwork(chain);
+        setTimeout(() => window.location.reload(), 1);
+      });
+
+      rawProvider.on("network", (_newNetwork: any, oldNetwork: any) => {
+        if (!oldNetwork) return;
+        window.location.reload();
       });
     },
     [provider],
   );
 
+  /**
+   * throws an error if networkID is not 1 (mainnet) or 4 (rinkeby)
+   */
+  const _checkNetwork = (otherChainID: number): boolean => {
+    if (chainID !== otherChainID) {
+      console.warn("You are switching networks");
+      if (otherChainID === 56 || otherChainID === 97) {
+        setChainID(otherChainID);
+        otherChainID === 56 ? setUri(getMainnetURI()) : setUri(getTestnetURI());
+        return true;
+      }
+      if (otherChainID === 250 || otherChainID === 4002) {
+        setChainID(otherChainID);
+        otherChainID === 250 ? setUri(getMainnetURI()) : setUri(getTestnetURI());
+        return true;
+      }
+      return false;
+    }
+    return true;
+  };
+
   // connect - only runs for WalletProviders
   const connect = useCallback(async () => {
     // handling Ledger Live;
     let rawProvider;
+    console.log(`🚀 - connect - isIframe()`, isIframe());
     if (isIframe()) {
       rawProvider = new IFrameEthereumProvider();
     } else {
@@ -133,20 +187,22 @@ export const Web3ContextProvider: React.FC<{ children: ReactElement }> = ({ chil
     // new _initListeners implementation matches Web3Modal Docs
     // ... see here: https://github.com/Web3Modal/web3modal/blob/2ff929d0e99df5edf6bb9e88cff338ba6d8a3991/example/src/App.tsx#L185
     _initListeners(rawProvider);
-
     const connectedProvider = new Web3Provider(rawProvider, "any");
-    setProvider(connectedProvider);
+    console.log(`🚀 - connect - connectedProvider`, connectedProvider);
+    const chainId = await connectedProvider.getNetwork().then(network => network.chainId);
     const connectedAddress = await connectedProvider.getSigner().getAddress();
-
+    const validNetwork = _checkNetwork(chainId);
+    if (!validNetwork) {
+      console.error("Wrong network, please switch to FANTOM mainnet");
+      // console.error("Wrong network, please switch to BSC mainnet");
+      return;
+    }
     // Save everything after we've validated the right network.
     // Eventually we'll be fine without doing network validations.
     setAddress(connectedAddress);
-    const networkHash = await initNetworkFunc({ provider: connectedProvider });
-    console.log("networkHash", networkHash);
-    setNetworkId(networkHash.networkId);
-    setNetworkName(networkHash.networkName);
-    setProviderUri(networkHash.uri);
-    setProviderInitialized(networkHash.initialized);
+    console.log(`🚀 - connect - connectedProvider`, connectedProvider);
+    setProvider(connectedProvider);
+
     // Keep this at the bottom of the method, to ensure any repaints have the data we need
     setConnected(true);
 
@@ -154,6 +210,7 @@ export const Web3ContextProvider: React.FC<{ children: ReactElement }> = ({ chil
   }, [provider, web3Modal, connected]);
 
   const disconnect = useCallback(async () => {
+    console.log("disconnecting");
     web3Modal.clearCachedProvider();
     setConnected(false);
 
@@ -162,34 +219,23 @@ export const Web3ContextProvider: React.FC<{ children: ReactElement }> = ({ chil
     }, 1);
   }, [provider, web3Modal, connected]);
 
-  const onChainProvider = useMemo(
-    () => ({
-      connect,
-      disconnect,
-      hasCachedProvider,
-      provider,
-      connected,
-      address,
-      web3Modal,
-      networkId,
-      networkName,
-      providerUri,
-      providerInitialized,
-    }),
-    [
-      connect,
-      disconnect,
-      hasCachedProvider,
-      provider,
-      connected,
-      address,
-      web3Modal,
-      networkId,
-      networkName,
-      providerUri,
-      providerInitialized,
-    ],
+  const onChainProvider = useMemo<onChainProvider>(
+    () => ({ connect, disconnect, hasCachedProvider, provider, connected, address, chainID, web3Modal, uri }),
+    [connect, disconnect, hasCachedProvider, provider, connected, address, chainID, web3Modal, uri],
   );
+
+  useEffect(() => {
+    // logs non-functioning nodes && returns an array of working mainnet nodes
+    NodeHelper.checkAllNodesStatus().then((validNodes: any) => {
+      validNodes = validNodes.filter((url: boolean | string) => url !== false);
+      if (!validNodes.includes(uri) && NodeHelper.retryOnInvalid()) {
+        // force new provider...
+        setTimeout(() => {
+          window.location.reload();
+        }, 1);
+      }
+    });
+  }, []);
 
   return <Web3Context.Provider value={{ onChainProvider }}>{children}</Web3Context.Provider>;
 };

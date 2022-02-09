@@ -1,9 +1,7 @@
-import { t } from "@lingui/macro";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { t } from "@lingui/macro";
 
-import { ACTION_GIVE, ACTION_GIVE_EDIT } from "./GiveThunk";
-
-export interface IPendingTxn {
+interface IPendingTxn {
   readonly txnHash: string;
   readonly text: string;
   readonly type: string;
@@ -26,30 +24,21 @@ const pendingTxnsSlice = createSlice({
     },
   },
 });
-export const getStakingTypeText = (action: string) => {
-  return action.toLowerCase() === "stake" ? t`Staking OHM` : t`Unstaking sOHM`;
-};
 
-export const getGivingTypeText = (action: string) => {
-  return action.toLowerCase() === ACTION_GIVE
-    ? t`Giving sOHM`
-    : ACTION_GIVE_EDIT
-    ? t`Editing sOHM donation amount`
-    : t`Withdrawing sOHM donation`;
+export const getStakingTypeText = (action: string) => {
+  return action.toLowerCase() === "stake" ? t`Staking FTMDAO` : t`Unstaking sFTMDAO`;
 };
 
 export const getWrappingTypeText = (action: string) => {
-  return action.toLowerCase() === "wrap" ? t`Wrapping OHM` : t`Unwrapping sOHM`;
+  return action.toLowerCase() === "wrap" ? t`Wrapping FTMDAO` : t`Unwrapping sFTMDAO`;
 };
+
 export const isPendingTxn = (pendingTransactions: IPendingTxn[], type: string) => {
   return pendingTransactions.map(x => x.type).includes(type);
 };
+
 export const txnButtonText = (pendingTransactions: IPendingTxn[], type: string, defaultText: string) => {
   return isPendingTxn(pendingTransactions, type) ? t`Pending...` : defaultText;
-};
-
-export const txnButtonTextMultiType = (pendingTransactions: IPendingTxn[], types: string[], defaultText: string) => {
-  return types.map(type => isPendingTxn(pendingTransactions, type)).indexOf(true) != -1 ? t`Pending...` : defaultText;
 };
 
 export const txnButtonTextGeneralPending = (pendingTransactions: IPendingTxn[], type: string, defaultText: string) => {

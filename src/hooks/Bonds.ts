@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { NetworkId } from "src/constants";
+import { useEffect, useState } from "react";
 import allBonds, { allExpiredBonds } from "src/helpers/AllBonds";
-import { Bond } from "src/lib/Bond";
 import { IUserBondDetails } from "src/slices/AccountSlice";
+import { Bond } from "src/lib/Bond";
 import { IBondDetails } from "src/slices/BondSlice";
 
 interface IBondingStateView {
@@ -13,18 +12,18 @@ interface IBondingStateView {
     };
   };
   bonding: {
-    loading: boolean;
+    loading: Boolean;
     [key: string]: any;
   };
 }
 
 // Smash all the interfaces together to get the BondData Type
-export interface IAllBondData extends Bond, IBondDetails, IUserBondDetails {}
+interface IAllBondData extends Bond, IBondDetails, IUserBondDetails {}
 
 const initialBondArray = allBonds;
 const initialExpiredArray = allExpiredBonds;
 // Slaps together bond data within the account & bonding states
-function useBonds(networkId: NetworkId) {
+function useBonds(chainID: number) {
   const bondLoading = useSelector((state: IBondingStateView) => !state.bonding.loading);
   const bondState = useSelector((state: IBondingStateView) => state.bonding);
   const accountBondsState = useSelector((state: IBondingStateView) => state.account.bonds);
@@ -32,7 +31,8 @@ function useBonds(networkId: NetworkId) {
   const [expiredBonds, setExpiredBonds] = useState<Bond[] | IAllBondData[]>(initialExpiredArray);
 
   useEffect(() => {
-    const bondDetails: IAllBondData[] = allBonds
+    let bondDetails: IAllBondData[];
+    bondDetails = allBonds
       .flatMap(bond => {
         if (bondState[bond.name] && bondState[bond.name].bondDiscount) {
           return Object.assign(bond, bondState[bond.name]); // Keeps the object type
@@ -46,30 +46,29 @@ function useBonds(networkId: NetworkId) {
         return bond;
       });
 
-    // NOTE (appleseed): temporary for ONHOLD MIGRATION
     const mostProfitableBonds = bondDetails.concat().sort((a, b) => {
-      if (!a.getBondability(networkId)) return 1;
-      if (!b.getBondability(networkId)) return -1;
+      if (a.getAvailability(chainID) === false) return 1;
+      if (b.getAvailability(chainID) === false) return -1;
       return a["bondDiscount"] > b["bondDiscount"] ? -1 : b["bondDiscount"] > a["bondDiscount"] ? 1 : 0;
     });
     setBonds(mostProfitableBonds);
-    // setBonds(bondDetails);
 
     // TODO (appleseed-expiredBonds): there may be a smarter way to refactor this
-    const expiredDetails: IAllBondData[] = allExpiredBonds
-      .flatMap(bond => {
-        if (bondState[bond.name] && bondState[bond.name].bondDiscount) {
-          return Object.assign(bond, bondState[bond.name]); // Keeps the object type
-        }
-        return bond;
-      })
-      .flatMap(bond => {
-        if (accountBondsState[bond.name]) {
-          return Object.assign(bond, accountBondsState[bond.name]);
-        }
-        return bond;
-      });
-    setExpiredBonds(expiredDetails);
+    // let expiredDetails: IAllBondData[];
+    // expiredDetails = allExpiredBonds
+    //   .flatMap(bond => {
+    //     if (bondState[bond.name] && bondState[bond.name].bondDiscount) {
+    //       return Object.assign(bond, bondState[bond.name]); // Keeps the object type
+    //     }
+    //     return bond;
+    //   })
+    //   .flatMap(bond => {
+    //     if (accountBondsState[bond.name]) {
+    //       return Object.assign(bond, accountBondsState[bond.name]);
+    //     }
+    //     return bond;
+    //   });
+    // setExpiredBonds(expiredDetails);
   }, [bondState, accountBondsState, bondLoading]);
 
   // Debug Log:

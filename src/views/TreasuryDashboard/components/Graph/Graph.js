@@ -1,10 +1,9 @@
-import { t } from "@lingui/macro";
+import Chart from "src/components/Chart/Chart.jsx";
 import { useTheme } from "@material-ui/core/styles";
-import Chart from "src/components/Chart/Chart";
-import { formatCurrency, trim } from "src/helpers";
-
+import { trim, formatCurrency } from "../../../../helpers";
 import { useTreasuryMetrics } from "../../hooks/useTreasuryMetrics";
-import { bulletpoints, itemType, tooltipInfoMessages, tooltipItems } from "../../treasuryData";
+import { useTreasuryRebases } from "../../hooks/useTreasuryRebases";
+import { bulletpoints, tooltipItems, tooltipInfoMessages, itemType } from "../../treasuryData.js";
 
 export const Graph = ({ children }) => <>{children}</>;
 
@@ -19,10 +18,10 @@ export const TotalValueDepositedGraph = () => {
       itemType={itemType.dollar}
       itemNames={tooltipItems.tvl}
       dataKey={["totalValueLocked"]}
-      headerText={t`Total Value Deposited`}
+      headerText="Total Value Deposited"
       stopColor={[["#768299", "#98B3E9"]]}
       bulletpointColors={bulletpoints.tvl}
-      infoTooltipMessage={tooltipInfoMessages().tvl}
+      infoTooltipMessage={tooltipInfoMessages.tvl}
       expandedGraphStrokeColor={theme.palette.graphStrokeColor}
       headerSubText={`${data && formatCurrency(data[0].totalValueLocked)}`}
     />
@@ -41,26 +40,22 @@ export const MarketValueGraph = () => {
         "treasuryDaiMarketValue",
         "treasuryFraxMarketValue",
         "treasuryWETHMarketValue",
+        "treasuryXsushiMarketValue",
         "treasuryLusdMarketValue",
-        "treasuryWBTCMarketValue",
-        "treasuryUstMarketValue",
-        "treasuryOtherMarketValue",
       ]}
       stopColor={[
-        ["#F5AC37", "#F5AC37"],
-        ["#768299", "#768299"],
-        ["#DC30EB", "#DC30EB"],
-        ["#8BFF4D", "#8BFF4D"],
-        ["#ff758f", "#ff758f"],
-        ["#4E1F71", "#4E1F71"],
-        ["#8AECCD", "#8AECCD"],
+        ["#F5AC37", "#EA9276"],
+        ["#768299", "#98B3E9"],
+        ["#DC30EB", "#EA98F1"],
+        ["#8BFF4D", "#4C8C2A"],
+        ["#ff758f", "#c9184a"],
       ]}
-      headerText={t`Market Value of Treasury Assets`}
+      headerText="Market Value of Treasury Assets"
       headerSubText={`${data && formatCurrency(data[0].treasuryMarketValue)}`}
       bulletpointColors={bulletpoints.coin}
       itemNames={tooltipItems.coin}
       itemType={itemType.dollar}
-      infoTooltipMessage={tooltipInfoMessages().mvt}
+      infoTooltipMessage={tooltipInfoMessages.mvt}
       expandedGraphStrokeColor={theme.palette.graphStrokeColor}
     />
   );
@@ -75,27 +70,20 @@ export const RiskFreeValueGraph = () => {
       type="stack"
       data={data}
       format="currency"
-      dataKey={[
-        "treasuryDaiRiskFreeValue",
-        "treasuryFraxRiskFreeValue",
-        "treasuryLusdRiskFreeValue",
-        "treasuryUstMarketValue",
-      ]}
+      dataKey={["treasuryDaiRiskFreeValue", "treasuryFraxRiskFreeValue", "treasuryLusdRiskFreeValue"]}
       stopColor={[
-        ["#F5AC37", "#F5AC37"],
-        ["#768299", "#768299"],
-        ["#ff758f", "#ff758f"],
-        ["#4E1F71", "#4E1F71"],
-        ["#000", "#fff"],
+        ["#F5AC37", "#EA9276"],
+        ["#768299", "#98B3E9"],
+        ["#ff758f", "#c9184a"],
         ["#000", "#fff"],
         ["#000", "#fff"],
       ]}
-      headerText={t`Risk Free Value of Treasury Assets`}
+      headerText="Risk Free Value of Treasury Assets"
       headerSubText={`${data && formatCurrency(data[0].treasuryRiskFreeValue)}`}
       bulletpointColors={bulletpoints.rfv}
       itemNames={tooltipItems.rfv}
       itemType={itemType.dollar}
-      infoTooltipMessage={tooltipInfoMessages().rfv}
+      infoTooltipMessage={tooltipInfoMessages.rfv}
       expandedGraphStrokeColor={theme.palette.graphStrokeColor}
     />
   );
@@ -115,8 +103,8 @@ export const ProtocolOwnedLiquidityGraph = () => {
       itemType={itemType.percentage}
       dataKey={["treasuryOhmDaiPOL"]}
       bulletpointColors={bulletpoints.pol}
-      infoTooltipMessage={tooltipInfoMessages().pol}
-      headerText={t`Protocol Owned Liquidity OHM-DAI`}
+      infoTooltipMessage={tooltipInfoMessages.pol}
+      headerText="Protocol Owned Liquidity OHM-DAI"
       expandedGraphStrokeColor={theme.palette.graphStrokeColor}
       headerSubText={`${data && trim(data[0].treasuryOhmDaiPOL, 2)}% `}
       stopColor={[["rgba(128, 204, 131, 1)", "rgba(128, 204, 131, 0)"]]}
@@ -144,12 +132,45 @@ export const OHMStakedGraph = () => {
       data={staked}
       dataKey={["staked"]}
       dataFormat="percent"
-      headerText={t`OHM Staked`}
+      headerText="OHM Staked"
       stopColor={[["#55EBC7", "#47ACEB"]]}
       bulletpointColors={bulletpoints.staked}
-      infoTooltipMessage={tooltipInfoMessages().staked}
+      infoTooltipMessage={tooltipInfoMessages.staked}
       expandedGraphStrokeColor={theme.palette.graphStrokeColor}
       headerSubText={`${staked && trim(staked[0].staked, 2)}% `}
+    />
+  );
+};
+
+export const APYOverTimeGraph = () => {
+  const theme = useTheme();
+  const { data } = useTreasuryRebases({ refetchOnMount: false });
+
+  let apy =
+    data &&
+    data
+      .map(entry => ({
+        timestamp: entry.timestamp,
+        apy: Math.pow(parseFloat(entry.percentage) + 1, 365 * 3) * 100,
+      }))
+      .filter(pm => pm.apy < 300000);
+
+  return (
+    <Chart
+      type="line"
+      scale="log"
+      data={apy}
+      dataKey={["apy"]}
+      dataFormat="percent"
+      headerText="APY over time"
+      itemNames={tooltipItems.apy}
+      itemType={itemType.percentage}
+      color={theme.palette.text.primary}
+      bulletpointColors={bulletpoints.apy}
+      stroke={[theme.palette.text.primary]}
+      infoTooltipMessage={tooltipInfoMessages.apy}
+      headerSubText={`${data && trim(apy[0].apy, 2)}%`}
+      expandedGraphStrokeColor={theme.palette.graphStrokeColor}
     />
   );
 };
@@ -171,13 +192,13 @@ export const RunwayAvailableGraph = () => {
       dataKey={["runwayCurrent", "runway7dot5k", "runway5k", "runway2dot5k"]}
       color={theme.palette.text.primary}
       stroke={colors}
-      headerText={t`Runway Available`}
+      headerText="Runway Available"
       headerSubText={`${data && trim(data[0].runwayCurrent, 1)} Days`}
       dataFormat="days"
       bulletpointColors={runwayBulletpoints}
       itemNames={tooltipItems.runway}
       itemType={""}
-      infoTooltipMessage={tooltipInfoMessages().runway}
+      infoTooltipMessage={tooltipInfoMessages.runway}
       expandedGraphStrokeColor={theme.palette.graphStrokeColor}
     />
   );

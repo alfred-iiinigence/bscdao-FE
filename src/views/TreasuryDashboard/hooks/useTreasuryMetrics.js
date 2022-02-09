@@ -1,6 +1,5 @@
 import { useQuery } from "react-query";
 import apollo from "src/lib/apolloClient";
-
 import { treasuryDataQuery } from "../treasuryData";
 
 export const useTreasuryMetrics = options => {

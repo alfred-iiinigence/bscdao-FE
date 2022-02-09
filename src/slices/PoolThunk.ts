@@ -1,26 +1,25 @@
-import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
-import { BigNumber, ethers } from "ethers";
-import { RootState } from "src/store";
-import { AwardAbi2, PrizePoolAbi, PrizePoolAbi2, SOHM } from "src/typechain";
-
-import { abi as AwardPool } from "../abi/33-together/AwardAbi2.json";
-import { abi as PrizePool } from "../abi/33-together/PrizePoolAbi2.json";
-import { abi as ierc20Abi } from "../abi/IERC20.json";
+import { ethers, BigNumber } from "ethers";
 import { addresses } from "../constants";
-import { setAll } from "../helpers";
-import { getCreditMaturationDaysAndLimitPercentage } from "../helpers/33Together";
-import { segmentUA } from "../helpers/userAnalyticHelpers";
+import { abi as ierc20Abi } from "../abi/IERC20.json";
+import { abi as PrizePool } from "../abi/33-together/PrizePoolAbi2.json";
+import { abi as AwardPool } from "../abi/33-together/AwardAbi2.json";
+import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
+import { clearPendingTxn, fetchPendingTxns } from "./PendingTxnsSlice";
 import { fetchAccountSuccess, getBalances } from "./AccountSlice";
+import { getCreditMaturationDaysAndLimitPercentage } from "../helpers/33Together";
+import { setAll } from "../helpers";
+import { error, info } from "./MessagesSlice";
+import { RootState } from "src/store";
 import {
-  IActionAsyncThunk,
-  IActionValueAsyncThunk,
+  IValueAsyncThunk,
   IBaseAsyncThunk,
   IChangeApprovalAsyncThunk,
+  IActionValueAsyncThunk,
+  IActionAsyncThunk,
   IJsonRPCError,
-  IValueAsyncThunk,
 } from "./interfaces";
-import { error, info } from "./MessagesSlice";
-import { clearPendingTxn, fetchPendingTxns } from "./PendingTxnsSlice";
+import { AwardAbi2, PrizePoolAbi, PrizePoolAbi2, SOHM } from "src/typechain";
+import { segmentUA } from "../helpers/userAnalyticHelpers";
 
 export const getPoolValues = createAsyncThunk(
   "pool/getPoolValues",
@@ -80,7 +79,7 @@ export const changeApproval = createAsyncThunk(
     }
 
     const signer = provider.getSigner();
-    const sohmContract = new ethers.Contract(addresses[networkID].SOHM_ADDRESS, ierc20Abi, signer) as SOHM;
+    const sohmContract = new ethers.Contract(addresses[networkID].SMUSH_ADDRESS, ierc20Abi, signer) as SOHM;
 
     let approveTx;
     let depositAllowance = await sohmContract.allowance(address, addresses[networkID].PT_PRIZE_POOL_ADDRESS);
@@ -146,7 +145,7 @@ export const poolDeposit = createAsyncThunk(
       signer,
     ) as PrizePoolAbi;
     let poolTx;
-    const uaData = {
+    let uaData = {
       address: address,
       value: value,
       type: "33t Deposit",
@@ -182,7 +181,7 @@ export const poolDeposit = createAsyncThunk(
       if (poolTx) {
         uaData.txHash = poolTx.hash;
         uaData.approved = true;
-        segmentUA(uaData);
+        // segmentUA(uaData);
         dispatch(clearPendingTxn(poolTx.hash));
       }
     }
@@ -190,17 +189,6 @@ export const poolDeposit = createAsyncThunk(
     dispatch(getBalances({ address, networkID, provider }));
   },
 );
-
-export interface IEarlyExitFeePayload {
-  readonly withdraw: {
-    earlyExitFee: [ethers.BigNumber, ethers.BigNumber] & {
-      exitFee: ethers.BigNumber;
-      burnedCredit: ethers.BigNumber;
-    };
-    stringExitFee: string;
-    credit: ethers.BigNumber;
-  };
-}
 
 export const getEarlyExitFee = createAsyncThunk(
   "pool/getEarlyExitFee",
@@ -254,7 +242,7 @@ export const poolWithdraw = createAsyncThunk(
     ) as PrizePoolAbi2;
 
     let poolTx;
-    const uaData = {
+    let uaData = {
       address: address,
       value: value,
       type: "Withdraw",
@@ -297,7 +285,7 @@ export const poolWithdraw = createAsyncThunk(
       }
     }
     uaData.approved = true;
-    segmentUA(uaData);
+    // segmentUA(uaData);
     dispatch(getBalances({ address, networkID, provider }));
   },
 );
@@ -356,13 +344,6 @@ export const awardProcess = createAsyncThunk(
 
 const initialState = {
   loading: false,
-  isRngRequested: false,
-  isRngTimedOut: false,
-  rngRequestCompleted: false,
-  creditMaturationInDays: 0,
-  creditLimitPercentage: 0,
-  awardPeriodRemainingSeconds: 0,
-  awardBalance: 0,
 };
 
 const poolTogetherSlice = createSlice({
@@ -398,6 +379,6 @@ const poolTogetherSlice = createSlice({
 
 export default poolTogetherSlice.reducer;
 
-const baseInfo = (state: RootState) => state.poolData;
+// const baseInfo = (state: RootState) => state.poolData;
 
-export const getPoolState = createSelector(baseInfo, app => app);
+// export const getPoolState = createSelector(baseInfo, app => app);

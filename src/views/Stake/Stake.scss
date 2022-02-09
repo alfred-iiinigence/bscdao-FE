@@ -1,19 +1,28 @@
-#stake-view,
-#v1-stake-view {
+#stake-view {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   overflow: hidden;
 
+  .stake-img {
+    margin-bottom: -1rem;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    z-index: 1;
+  }
+
   .rebase-timer {
     margin: 0 !important;
     line-height: 110% !important;
   }
 
-  .stake-to-ohm-checkbox {
-    svg {
-      font-size: 0.8em;
+  .your-earnings {
+    text-align: right;
+    h3 {
+      color: var(--color-gold);
+      font-weight: 800;
     }
   }
 
@@ -26,16 +35,20 @@
     width: 100%;
     padding: 0;
   }
-
-  .stake-tab-panel.wrap-page {
+  .mobile .stake-tab-panel,
+  .mobile .stake-tab-panel > div.MuiBox-root {
     display: flex;
-    // padding: 30px 0;
-    padding-bottom: 16px;
-    width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    justify-items: center;
   }
 
-  .ohm-card .card-header {
+  .ohm-card {
     position: relative;
+    z-index: 2;
+    .card-header {
+      position: relative;
+    }
   }
   .ohm-card .header {
     min-height: 3em;
@@ -44,64 +57,17 @@
     min-height: 33px !important;
     height: 20px;
   }
-  .confirm-dialog {
-    margin-bottom: 0.8rem;
-    width: 100%;
-    padding: 12px 12px;
-  }
   .stake-note {
     text-align: center;
     font-style: italic;
-  }
-
-  .stake-accordion {
-    backdrop-filter: none;
-    background-color: inherit;
-    margin: 12px 0;
-
-    &:before {
-      display: none;
-    }
-
-    .MuiAccordionSummary-root {
-      padding: 0;
-      justify-content: space-between;
-      min-height: auto;
-    }
-
-    .MuiAccordionSummary-content {
-      display: block;
-      margin: 0;
-
-      .data-row {
-        margin: 0;
-      }
-    }
-
-    .MuiAccordionSummary-expandIcon {
-      color: inherit;
-      height: inherit;
-      padding-top: 0;
-      padding-bottom: 0;
-      position: absolute;
-      left: 130px;
-      top: -3px;
-      transition: left 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, top 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,
-        transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
-      &.Mui-expanded {
-        left: 134px;
-        top: 1px;
-      }
-    }
-
-    .MuiAccordionDetails-root {
-      padding: 0;
-      display: block;
-    }
+    color: var(--color-primary);
   }
 }
 
 .migrate-sohm-button {
+  position: absolute;
+  right: 0px;
+  top: 0px;
   font-size: 1em;
   display: flex;
   align-items: center;
@@ -120,14 +86,19 @@
 .stake-top-metrics {
   display: flex;
   width: 100%;
-  padding: 0;
   text-align: center;
-  margin-top: 10px;
+  padding-top: 20px;
+  padding-bottom: 1rem;
+  p {
+    margin-bottom: 0;
+  }
   h5 {
     font-weight: 400;
   }
   h4 {
-    font-weight: 500;
+    // font-weight: 600;
+    padding: 20px 0;
+    width: 100%;
   }
   .stake-apy,
   .stake-tvl,
@@ -139,6 +110,25 @@
     text-overflow: ellipsis;
     // white-space: nowrap;
     overflow: hidden;
+    word-break: break-all;
+    justify-content: center;
+    span {
+      margin: auto;
+    }
+    p {
+      font-weight: 600;
+    }
+  }
+
+  .stake-apy {
+    h4 {
+      span {
+        width: 100%;
+        display: inline-block;
+        padding: 0 12px;
+      }
+      color: var(--color-gold);
+    }
   }
 }
 
@@ -148,7 +138,6 @@
   .stake-index {
     align-items: flex-start;
   }
-  text-align: left;
 }
 
 .ohm-logo-tiny {
@@ -196,9 +185,9 @@
 }
 
 .stake-action-row [role="tabpanel"] {
-  width: 100%;
+  width: 99%;
   min-width: 162px;
-  max-width: initial;
+  max-width: 220px;
   margin: 5px;
 }
 
@@ -213,7 +202,7 @@
 .ohm-input {
   max-width: 542px;
   width: 100%;
-  margin: 4px !important;
+  margin: 5px !important;
 }
 
 .stake-button {
@@ -222,31 +211,6 @@
   min-width: 163px !important;
   max-width: 542px !important;
   height: 43px !important;
-  &.wrap-page {
-    // margin-left: 2%;
-    width: 40%;
-  }
-}
-
-.no-input-visible {
-  width: 100%;
-  line-height: 1.2em;
-  padding: 5px 0;
-}
-
-.v2-migration-link {
-  color: inherit;
-}
-
-#asset-select {
-  // color: #f8cc82;
-  input {
-    height: 33px !important;
-  }
-}
-
-.Muilnput-underline {
-  display: none !important;
 }
 
 .mobile .stake-button {
@@ -254,14 +218,6 @@
   max-width: 542px;
   align-self: center;
   justify-self: center;
-}
-
-.stake-grid-item {
-  width: 100%;
-  padding-right: 10px;
-  height: 50px;
-  align-items: center;
-  justify-content: center;
 }
 
 .staking-area {
@@ -303,7 +259,7 @@
   }
 
   .pool-data {
-    // margin-top: 15px;
+    margin-top: 15px;
     width: 100%;
     .pool-data-row {
       display: flex;
@@ -329,23 +285,4 @@
       margin-bottom: 15px;
     }
   }
-}
-.MuiSelect-select.MuiSelect-select {
-  padding-right: 10px !important;
-}
-
-.asset-select-label + .MuiInput-root.MuiInputBase-formControl {
-  margin-right: 3px;
-}
-
-.mobile .stake-tab-panel,
-.mobile .stake-tab-panel > div.MuiBox-root {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  justify-items: center;
-}
-
-.mobile .stake-tab-panel.wrap-page {
-  align-items: center;
 }

@@ -1,65 +1,93 @@
-import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { ethers } from "ethers";
-import { NodeHelper } from "src/helpers/NodeHelper";
+import { addresses } from "../constants";
+
+import { setAll, getTokenPrice, getMarketPrice, validateETHAddress } from "../helpers";
+import { createSlice, createSelector, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "src/store";
-
-import { abi as sOHMv2 } from "../abi/sOhmv2.json";
-import { addresses, NetworkId } from "../constants";
-import { getMarketPrice, getTokenPrice, setAll } from "../helpers";
-import apollo from "../lib/apolloClient";
-import { OlympusStaking__factory, OlympusStakingv2__factory, SOhmv2 } from "../typechain";
 import { IBaseAsyncThunk } from "./interfaces";
+import { mush_busd } from "../helpers/AllBonds";
+import multicall from "../helpers/multicall";
+import { abi as loadAppDetailsABI } from "../abi/custom/loadAppDetails.json";
 
-interface IProtocolMetrics {
-  readonly timestamp: string;
-  readonly ohmCirculatingSupply: string;
-  readonly sOhmCirculatingSupply: string;
-  readonly totalSupply: string;
-  readonly ohmPrice: string;
-  readonly marketCap: string;
-  readonly totalValueLocked: string;
-  readonly treasuryMarketValue: string;
-  readonly nextEpochRebase: string;
-  readonly nextDistributedOhm: string;
-}
+const getReferralFromStorage = () => {
+  const _value = window.localStorage.getItem("referral") || "";
+  if (_value) {
+    return _value;
+  }
+  //
+  window.localStorage.removeItem("referral");
+  return "";
+};
+const getMyReferralFromStorage = () => {
+  const _value = window.localStorage.getItem("my_referral") || "";
+  if (_value) {
+    return _value;
+  }
+  //
+  window.localStorage.removeItem("my_referral");
+  return "";
+};
 
+const initialState = {
+  loading: false,
+  loadingMarketPrice: false,
+  referral: getReferralFromStorage(),
+  myReferral: getMyReferralFromStorage(),
+};
+const circulatingSupply = {
+  inputs: [],
+  name: "circulatingSupply",
+  outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+  stateMutability: "view",
+  type: "function",
+};
+
+/**
+ * STAKING Page : Value APY , Total Value Deposited , Current Index
+ */
 export const loadAppDetails = createAsyncThunk(
   "app/loadAppDetails",
   async ({ networkID, provider }: IBaseAsyncThunk, { dispatch }) => {
-    const protocolMetricsQuery = `
-      query {
-        _meta {
-          block {
-            number
-          }
-        }
-        protocolMetrics(first: 1, orderBy: timestamp, orderDirection: desc) {
-          timestamp
-          ohmCirculatingSupply
-          sOhmCirculatingSupply
-          totalSupply
-          ohmPrice
-          marketCap
-          totalValueLocked
-          treasuryMarketValue
-          nextEpochRebase
-          nextDistributedOhm
-        }
-      }
-    `;
+    const calls = [
+      { address: addresses[networkID].BSCDAO_ADDRESS, name: "balanceOf", params: [addresses[networkID].STAKING_ADDRESS] },
+      { address: addresses[networkID].sBSCDAO_ADDRESS, name: "circulatingSupply", params: [] },
+      //TODO : Change the method name when changing the contract name
+      { address: addresses[networkID].CIRCULATING_SUPPLY_ADDRESS, name: "XYZCirculatingSupply", params: [] },
+      { address: addresses[networkID].BSCDAO_ADDRESS, name: "totalSupply", params: [] },
+      { address: addresses[networkID].STAKING_ADDRESS, name: "epoch", params: [] },
+      { address: mush_busd.networkAddrs[networkID].reserveAddress, name: "totalSupply", params: [] },
+      {
+        address: mush_busd.networkAddrs[networkID].reserveAddress,
+        name: "balanceOf",
+        params: [addresses[networkID].TREASURY_ADDRESS],
+      },
+      { address: addresses[networkID].STAKING_ADDRESS, name: "index", params: [] },
+    ];
 
-    if (networkID !== NetworkId.MAINNET) {
-      provider = NodeHelper.getMainnetStaticProvider();
-      networkID = NetworkId.MAINNET;
+    let rawAppDetails;
+    try {
+      rawAppDetails = await multicall(networkID, provider, loadAppDetailsABI, calls);
+      console.log(`🚀 - rawAppDetails111`, provider);
+      /*const stakingContract = new ethers.Contract(addresses[networkID].STAKING_ADDRESS, loadAppDetailsABI, provider);
+      console.log(`🚀 - stakingContract`, stakingContract);
+      const epoch = await stakingContract.epoch();
+      console.log(`🚀 - stakingContract eproch`, epoch);
+      const stakingReward = epoch.distribute;
+      console.log(`🚀 - stakingContract 1111`, stakingReward);*/
+      // const sHecMainContract = new ethers.Contract(addresses[networkID].SMUSH_ADDRESS, loadAppDetailsABI, provider);
+      // console.log(`🚀 - rawAppDetails111`, sHecMainContract);
+      // let res = await sHecMainContract.balanceOf(addresses[networkID].STAKING_ADDRESS);
+
+      console.log(`🚀 - rawAppDetails111`, rawAppDetails);
+      // const [one, two, ...lastArr] = rawAppDetails;
+      // rawAppDetails = [one, two, one, ...lastArr];
+      // console.log(`🚀 - rawAppDetails`, rawAppDetails);
+
+      // rawAppDetails = rawAppDetails.splice(2, 0, rawAppDetails[1]);
+    } catch (err) {
+      console.log(`🚀 - rawAppDetails111`, err);
     }
-    const graphData = await apollo<{ protocolMetrics: IProtocolMetrics[] }>(protocolMetricsQuery);
 
-    if (!graphData || graphData == null) {
-      console.error("Returned a null response when querying TheGraph");
-      return;
-    }
-
-    const stakingTVL = parseFloat(graphData.data.protocolMetrics[0].totalValueLocked);
     // NOTE (appleseed): marketPrice from Graph was delayed, so get CoinGecko price
     // const marketPrice = parseFloat(graphData.data.protocolMetrics[0].ohmPrice);
     let marketPrice;
@@ -67,18 +95,31 @@ export const loadAppDetails = createAsyncThunk(
       const originalPromiseResult = await dispatch(
         loadMarketPrice({ networkID: networkID, provider: provider }),
       ).unwrap();
-      marketPrice = originalPromiseResult?.marketPrice;
+      marketPrice = originalPromiseResult.marketPrice;
+      console.log(`🚀 - marketPrice`, originalPromiseResult);
+      // marketPrice = 0x01ba60d33800;
     } catch (rejectedValueOrSerializedError) {
       // handle error here
       console.error("Returned a null response from dispatch(loadMarketPrice)");
       return;
     }
 
-    const marketCap = parseFloat(graphData.data.protocolMetrics[0].marketCap);
-    const circSupply = parseFloat(graphData.data.protocolMetrics[0].ohmCirculatingSupply);
-    const totalSupply = parseFloat(graphData.data.protocolMetrics[0].totalSupply);
-    const treasuryMarketValue = parseFloat(graphData.data.protocolMetrics[0].treasuryMarketValue);
+    const mushBalance = rawAppDetails[0][0];
+    const sMushCirc = rawAppDetails[1][0] / 1e9;
+    const circ = rawAppDetails[2][0];
+    const total = rawAppDetails[3][0];
+    const epoch = rawAppDetails[4];
+    const total_lp = rawAppDetails[5][0];
+    const mushBUSDBalance = rawAppDetails[6][0];
+
+    const stakingTVL = (mushBalance * marketPrice) / 1e9;
+    const circSupply = circ / 1e9;
+    const totalSupply = total / 1e9;
+    const marketCap = marketPrice * circSupply;
+    const pol = mushBUSDBalance.mul(100).div(total_lp).toNumber() / 100;
+    // const treasuryMarketValue = parseFloat(graphData.data.protocolMetrics[0].treasuryMarketValue);
     // const currentBlock = parseFloat(graphData.data._meta.block.number);
+    const stakingRatio = sMushCirc / circSupply;
 
     if (!provider) {
       console.error("failed to connect to provider, please connect your wallet");
@@ -88,31 +129,46 @@ export const loadAppDetails = createAsyncThunk(
         marketCap,
         circSupply,
         totalSupply,
-        treasuryMarketValue,
-      } as IAppData;
+        stakingRatio,
+        pol,
+        // treasuryMarketValue,
+      };
     }
-    const currentBlock = await provider.getBlockNumber();
 
-    const stakingContract = OlympusStakingv2__factory.connect(addresses[networkID].STAKING_V2, provider);
-    const stakingContractV1 = OlympusStaking__factory.connect(addresses[networkID].STAKING_ADDRESS, provider);
+    let currentBlock;
+    try {
+      currentBlock = await provider.getBlockNumber();
+    } catch (error) {
+      console.log(error);
+    }
 
-    const sohmMainContract = new ethers.Contract(addresses[networkID].SOHM_V2 as string, sOHMv2, provider) as SOhmv2;
-
+    console.log(`🚀 - epoch.distribute`, epoch);
     // Calculating staking
-    const epoch = await stakingContract.epoch();
-    const secondsToEpoch = Number(await stakingContract.secondsToNextEpoch());
+    // const stakingReward = epoch.distribute / circ;
+    // const stakingRebase = Number(stakingReward.toString()) / Number(sMushCirc.toString());
     const stakingReward = epoch.distribute;
-    const circ = await sohmMainContract.circulatingSupply();
-    const stakingRebase = Number(stakingReward.toString()) / Number(circ.toString());
+    console.log(`🚀 - staking`, { stakingReward, sMushCirc: sMushCirc * 1e9 });
+    const stakingRebase = stakingReward / (sMushCirc * 1e9);
+    console.log(`🚀 - staking`, stakingRebase);
+    const endBlock = epoch.endBlock;
+
+    console.log(`🚀 - stakingRebase`, stakingRebase);
+    //*    1 + 18 ^ 15 - 1
     const fiveDayRate = Math.pow(1 + stakingRebase, 5 * 3) - 1;
+    console.log(`🚀 - fiveDayRate`, fiveDayRate);
     const stakingAPY = Math.pow(1 + stakingRebase, 365 * 3) - 1;
+    console.log(`🚀 - fiveDayRate`, stakingAPY);
+
+    console.log("Jay Tets :: stakingReward ", stakingReward);
+    console.log("Jay Test :: " + stakingReward.toString() + " 1 =  " + sMushCirc.toString());
 
     // Current index
-    const currentIndex = await stakingContract.index();
-    const currentIndexV1 = await stakingContractV1.index();
+    // const currentIndex = await stakingContract.index();
+    console.log(`🚀 - rawAppDetails[7][0]`, rawAppDetails[7][0]);
+    const currentIndex = rawAppDetails[7][0];
+
     return {
       currentIndex: ethers.utils.formatUnits(currentIndex, "gwei"),
-      currentIndexV1: ethers.utils.formatUnits(currentIndexV1, "gwei"),
       currentBlock,
       fiveDayRate,
       stakingAPY,
@@ -122,8 +178,10 @@ export const loadAppDetails = createAsyncThunk(
       marketPrice,
       circSupply,
       totalSupply,
-      treasuryMarketValue,
-      secondsToEpoch,
+      stakingRatio,
+      pol,
+      endBlock,
+      // treasuryMarketValue,
     } as IAppData;
   },
 );
@@ -153,10 +211,13 @@ export const findOrLoadMarketPrice = createAsyncThunk(
     } else {
       // we don't have marketPrice in app.state, so go get it
       try {
+        console.log(`🚀 - networkID`, networkID, provider);
         const originalPromiseResult = await dispatch(
           loadMarketPrice({ networkID: networkID, provider: provider }),
         ).unwrap();
+        console.log(`🚀 - originalPromiseResult`, originalPromiseResult);
         marketPrice = originalPromiseResult?.marketPrice;
+        console.log(`🚀 - marketPrice`, marketPrice);
       } catch (rejectedValueOrSerializedError) {
         // handle error here
         console.error("Returned a null response from dispatch(loadMarketPrice)");
@@ -168,45 +229,38 @@ export const findOrLoadMarketPrice = createAsyncThunk(
 );
 
 /**
- * - fetches the OHM price from CoinGecko (via getTokenPrice)
- * - falls back to fetch marketPrice from ohm-dai contract
+ * - fetches the MUSH price from CoinGecko (via getTokenPrice)
+ * - falls back to fetch marketPrice from mush-busd contract
  * - updates the App.slice when it runs
  */
 const loadMarketPrice = createAsyncThunk("app/loadMarketPrice", async ({ networkID, provider }: IBaseAsyncThunk) => {
   let marketPrice: number;
   try {
-    // only get marketPrice from eth mainnet
-    marketPrice = await getMarketPrice();
-    // v1MarketPrice = await getV1MarketPrice();
+    marketPrice = await getMarketPrice({ networkID, provider });
+    marketPrice = marketPrice / Math.pow(10, 9);
   } catch (e) {
-    marketPrice = await getTokenPrice("olympus");
+    console.log(`🚀 - loadMarketPrice - e`, e);
+    marketPrice = await getTokenPrice("mush");
   }
   return { marketPrice };
 });
 
-export interface IAppData {
-  readonly circSupply?: number;
+interface IAppData {
+  readonly circSupply: number;
   readonly currentIndex?: string;
-  readonly currentIndexV1?: string;
   readonly currentBlock?: number;
   readonly fiveDayRate?: number;
-  readonly loading: boolean;
-  readonly loadingMarketPrice: boolean;
-  readonly marketCap?: number;
-  readonly marketPrice?: number;
+  readonly marketCap: number;
+  readonly marketPrice: number;
   readonly stakingAPY?: number;
   readonly stakingRebase?: number;
-  readonly stakingTVL?: number;
-  readonly totalSupply?: number;
+  readonly stakingTVL: number;
+  readonly stakingRatio?: number;
+  readonly totalSupply: number;
   readonly treasuryBalance?: number;
-  readonly treasuryMarketValue?: number;
-  readonly secondsToEpoch?: number;
+  readonly pol?: number;
+  // readonly treasuryMarketValue?: number;
 }
-
-const initialState: IAppData = {
-  loading: false,
-  loadingMarketPrice: false,
-};
 
 const appSlice = createSlice({
   name: "app",
@@ -214,6 +268,18 @@ const appSlice = createSlice({
   reducers: {
     fetchAppSuccess(state, action) {
       setAll(state, action.payload);
+    },
+    setReferral(state, action: PayloadAction<string>) {
+      if (action.payload) {
+        state.referral = action.payload;
+        window.localStorage.setItem("referral", state.referral);
+      }
+    },
+    setMyReferral(state, action: PayloadAction<string>) {
+      if (action.payload) {
+        state.myReferral = action.payload;
+        window.localStorage.setItem("my_referral", state.myReferral);
+      }
     },
   },
   extraReducers: builder => {
@@ -247,6 +313,6 @@ const baseInfo = (state: RootState) => state.app;
 
 export default appSlice.reducer;
 
-export const { fetchAppSuccess } = appSlice.actions;
+export const { fetchAppSuccess, setReferral, setMyReferral } = appSlice.actions;
 
 export const getAppState = createSelector(baseInfo, app => app);
