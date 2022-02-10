@@ -4,7 +4,7 @@ import commonSettings, { handleBackdropFilter } from "./global.js";
 
 const lightTheme = {
   color: "#253449",
-  gold: "#FFD166",
+  gold: "#FF6854",
   gray: "#A3A3A3",
   blueish_gray: "#768299",
   textHighlightColor: "#93AEBC", // "#F4D092",
@@ -26,7 +26,7 @@ const lightTheme = {
   // these need fixing
   primaryButtonHoverColor: "#333333",
   secondaryButtonHoverBG: "rgba(54, 56, 64, 1)",
-  outlinedPrimaryButtonHoverBG: "#FFD166",
+  outlinedPrimaryButtonHoverBG: "#FF6854",
   outlinedPrimaryButtonHoverColor: "#333333",
   outlinedSecondaryButtonHoverBG: "#FCFCFC",
   outlinedSecondaryButtonHoverColor: "#333333",
@@ -61,7 +61,7 @@ export const light = responsiveFontSizes(
         graphStrokeColor: lightTheme.graphStrokeColor,
       },
       typography: {
-        fontFamily: "Proxima Nova",
+        fontFamily: "Gilroy",
       },
       props: {
         MuiSvgIcon: {
@@ -271,7 +271,7 @@ export const light = responsiveFontSizes(
             },
             "&:active": {
               color: lightTheme.gold,
-              borderBottom: "#FFD166",
+              borderBottom: "#FF6854",
             },
           },
           textSecondary: {

@@ -33,7 +33,9 @@ function NavContent() {
 
   const checkPage = useCallback((match, location, page) => {
     const currentPath = location.pathname.replace("/", "");
-
+    if (currentPath.indexOf("ido") >= 0 && page === "ido") {
+      return true;
+    }
     if (currentPath.indexOf("wrap") >= 0 && page === "wrap") {
       return true;
     }
@@ -220,52 +222,21 @@ function NavContent() {
 
               <Link
                 component={NavLink}
-                id="nft-nav"
-                to="/nft"
+                id="ido-nav"
+                to="/ido"
                 isActive={(match, location) => {
-                  return checkPage(match, location, "nft");
+                  return checkPage(match, location, "ido");
                 }}
                 className={`button-dapp-menu ${isActive ? "active" : ""}`}
               >
+                <img src={WrapIcon} alt="Wrap" />
+
                 <Typography component="span" variant="button">
-                  <img src={NftIcon} alt="Nft" />
-                  {/* <SvgIcon color="primary" component={BondIcon} viewBox="0 0 26 17" /> */}
-                  <Trans>NFT</Trans>
-                  <Chip label="NEW!" color="secondary" size="small" />
+                  <Trans>IDO</Trans>
                 </Typography>
               </Link>
-              
-              <Link
-                component={NavLink}
-                id="launchpad-nav"
-                to="#"
-                isActive={(match, location) => {
-                  return checkPage(match, location, "launchpad");
-                }}
-                className={`button-dapp-menu ${isActive ? "active" : ""}`}
-              >
-                <Typography component="span" variant="button">
-                  <img src={LaunchpadIcon} alt="Launchpad" />
-                  {/* <SvgIcon color="primary" component={BondIcon} viewBox="0 0 26 17" /> */}
-                  <Trans>Launchpad</Trans>
-                  <Chip label="SOON" color="primary" size="small" />
-                </Typography>
-              </Link>
-              <Link
-                component={NavLink}
-                id="sandbox-nav"
-                to="#"
-                isActive={(match, location) => {
-                  return checkPage(match, location, "sandbox");
-                }}
-                className={`button-dapp-menu ${isActive ? "active" : ""}`}
-              >
-                <Typography component="span" variant="button">
-                  <img src={SandboxIcon} alt="Sandbox" />
-                  <Trans>Sandbox</Trans>
-                  <Chip label="SOON" color="primary" size="small" />
-                </Typography>
-              </Link>
+
+            
             </div>
           </div>
         </div>

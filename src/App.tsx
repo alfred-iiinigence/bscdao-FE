@@ -30,7 +30,7 @@ import "./style.scss";
 import Wrap from "./views/Wrap/Wrap";
 import { useGoogleAnalytics } from "./hooks/useGoogleAnalytics";
 import Calculator from "./views/Calculator/index";
-import Nft from "./views/Nft/Nft";
+import Ido from "./views/IDO/index";
 
 // 😬 Sorry for all the console logging
 const DEBUG = false;
@@ -268,8 +268,8 @@ function App() {
               <Route path="/stake">
                 <Stake />
               </Route>
-              <Route path="/nft">
-                <Nft />
+              <Route path="/ido">
+                <Ido />
               </Route>
 
               <Route path="/calculator">

@@ -33,7 +33,7 @@ const commonSettings = {
   direction: "ltr",
   typography: {
     fontSize: 16,
-    fontFamily: "Proxima Nova",
+    fontFamily: "Gilroy",
     h1: {
       fontSize: "3.3rem",
       fontWeight: 600,
@@ -278,5 +278,6 @@ const commonSettings = {
     },
   },
 };
+
 
 export default commonSettings;

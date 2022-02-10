@@ -46,12 +46,12 @@ export const girth = responsiveFontSizes(
         },
         text: {
           primary: girthTheme.color,
-          secondary: girthTheme.gray,
+          secondary: girthTheme.color,
         },
         highlight: girthTheme.textHighlightColor,
       },
       typography: {
-        fontFamily: "Proxima Nova",
+        fontFamily: "Gilroy",
       },
       props: {
         MuiSvgIcon: {
